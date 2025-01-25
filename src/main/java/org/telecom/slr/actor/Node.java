@@ -46,7 +46,7 @@ public class Node extends Actor {
             WriteRequest writeRequest = writeRequests.get(valueMessage.requestNumber());
             writeRequest.values.add(valueMessage);
 
-            if (writeRequests.values().size() + 1 > address.size() / 2) {
+            if (writeRequest.values.size() > address.size() / 2) {
                 ValueMessage newValue = writeRequest.getGreater();
                 timeStamp = newValue.timeStamp() + 1;
                 address.forEach(ref -> ref.tell(new UpdateMessage(requestNumber, timeStamp, writeRequest.value), self()));
@@ -80,8 +80,9 @@ public class Node extends Actor {
             if (writeRequest.timeStamp == timeStamp && writeRequest.value == value) {
                 writeRequest.writtenValues.add(writtenValue);
 
-                if (writeRequests.values().size() + 1 > address.size() / 2) {
+                if (writeRequest.writtenValues.size() > address.size() / 2) {
                     writeRequest.requester.tell(new WriteIssued(requestNumber, timeStamp, value), self());
+                    writeRequests.remove(requestNumber);
                 }
             }
         }
