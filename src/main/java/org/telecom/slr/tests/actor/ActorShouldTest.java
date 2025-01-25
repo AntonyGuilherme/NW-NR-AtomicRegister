@@ -8,10 +8,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.telecom.slr.actor.Node;
-import org.telecom.slr.actor.messages.SendMessage;
-import org.telecom.slr.actor.messages.UpdateMessage;
-import org.telecom.slr.actor.messages.ValueMessage;
-import org.telecom.slr.actor.messages.WriteMessage;
+import org.telecom.slr.actor.messages.*;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -62,6 +59,16 @@ public class ActorShouldTest {
 
         Assert.assertTrue(ActorListener.messages.stream()
                 .anyMatch(m -> m instanceof UpdateMessage && ((UpdateMessage) m).value() == 10));
+    }
+
+    @Test
+    public void onWritingInformThatTheNewProposedValueWasWritten() throws InterruptedException {
+        this.node.tell(new WriteMessage(10), this.listener);
+
+        Thread.sleep(100);
+
+        Assert.assertTrue(ActorListener.messages.stream()
+                .anyMatch(m -> m instanceof WriteIssued && ((WriteIssued) m).value() == 10));
     }
 
     @After
