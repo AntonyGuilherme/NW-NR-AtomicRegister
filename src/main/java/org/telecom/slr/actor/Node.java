@@ -76,15 +76,12 @@ public class Node extends Actor {
 
         if (writeRequests.containsKey(requestNumber)) {
             WriteRequest writeRequest = writeRequests.get(requestNumber);
-
-            if (writeRequest.timeStamp == timeStamp && writeRequest.value == value) {
-                writeRequest.writtenValues.add(writtenValue);
+            writeRequest.writtenValues.add(writtenValue);
 
                 if (writeRequest.writtenValues.size() > address.size() / 2) {
                     writeRequest.requester.tell(new WriteIssued(requestNumber, timeStamp, value), self());
                     writeRequests.remove(requestNumber);
                 }
-            }
         }
     }
 

@@ -72,6 +72,35 @@ public class ActorShouldTest {
                 ActorListener.messages.stream().filter(m -> m instanceof WriteIssued).count());
     }
 
+    @Test
+    public void onWritingInformThatTheNewProposedValueWasWrittenEvenIfTwoWrittenAreHappeningConcurrently() throws InterruptedException {
+        this.node.tell(new WriteMessage(10), this.listener);
+        this.node.tell(new WriteMessage(5), this.listener);
+
+        Thread.sleep(100);
+
+        Assert.assertTrue(ActorListener.messages.stream().filter(m -> m instanceof WriteIssued)
+                .allMatch(m -> ((WriteIssued) m).timeStamp() == 0));
+        Assert.assertEquals(2,
+                ActorListener.messages.stream().filter(m -> m instanceof WriteIssued).count());
+    }
+
+    @Test
+    public void onWritingInformThatTheNewProposedValueWasWrittenEvenIfTwoWrittenAreHappensSequentially() throws InterruptedException {
+        this.node.tell(new WriteMessage(10), this.listener);
+        Thread.sleep(100);
+
+        this.node.tell(new WriteMessage(5), this.listener);
+        Thread.sleep(100);
+
+        Assert.assertTrue(ActorListener.messages.stream().filter(m -> m instanceof WriteIssued)
+                .anyMatch(m -> ((WriteIssued) m).timeStamp() == 1));
+        Assert.assertTrue(ActorListener.messages.stream().filter(m -> m instanceof WriteIssued)
+                .anyMatch(m -> ((WriteIssued) m).timeStamp() == 0));
+        Assert.assertEquals(2,
+                ActorListener.messages.stream().filter(m -> m instanceof WriteIssued).count());
+    }
+
     @After
     public void tearDown() {
         this.system.terminate();
