@@ -1,5 +1,6 @@
 package org.telecom.slr.tests.actor;
 
+import akka.actor.AbstractActor;
 import org.telecom.slr.actor.Actor;
 
 import java.util.ArrayList;
@@ -10,5 +11,13 @@ public class ActorListener extends Actor {
 
     public ActorListener() {
         run((message, context) -> messages.add(message));
+        run(this::log);
     }
+    private void log(Object message, AbstractActor.ActorContext context) {
+        String from = context.sender().path().name();
+        String to = context.self().path().name();
+
+        System.out.printf("from %s to %s : %s%n", from, to, message);
+    }
+
 }
