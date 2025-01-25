@@ -55,7 +55,7 @@ public class ActorShouldTest {
     }
 
     @Test
-    public void onWritingReceiveTheNewProposedValue() throws InterruptedException {
+    public void onWritingInformTheNewProposedValueForAllKnownNodes() throws InterruptedException {
         this.node.tell(new WriteMessage(10), this.listener);
 
         Thread.sleep(100);
