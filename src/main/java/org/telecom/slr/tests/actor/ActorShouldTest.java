@@ -17,13 +17,14 @@ public class ActorShouldTest {
     private ActorSystem system;
     private ActorRef listener;
     private ActorRef node;
+    private List<ActorRef> otherNodes;
 
     @Before
-    public void setUp() {
+    public void setUp() throws InterruptedException {
         this.system = ActorSystem.create("actorSystem");
         this.listener = system.actorOf(Props.create(ActorListener.class, ActorListener::new), "listener");
         this.node = system.actorOf(Props.create(Node.class, Node::new), "node");
-        List<ActorRef> otherNodes = new LinkedList<>();
+        this.otherNodes = new LinkedList<>();
         this.node.tell(this.listener, ActorRef.noSender());
 
         for (int i = 0; i < 2; i++) {
@@ -40,6 +41,8 @@ public class ActorShouldTest {
 
             otherNodes.get(i).tell(this.node, ActorRef.noSender());
         }
+
+        Thread.sleep(100);
     }
 
     @Test
@@ -101,9 +104,43 @@ public class ActorShouldTest {
                 ActorListener.messages.stream().filter(m -> m instanceof WriteIssued).count());
     }
 
+    @Test
+    public void onWritingInformThatTheNewProposedValueWasWrittenWithTheMostRecentTimeStamp() throws InterruptedException {
+
+        ActorRef otherNode = createAndTellOthers("other");
+        Thread.sleep(100);
+
+        otherNode.tell(new WriteMessage(10), this.listener);
+        Thread.sleep(100);
+
+        otherNode.tell(new WriteMessage(50), this.listener);
+        Thread.sleep(100);
+
+        this.node.tell(new WriteMessage(5), this.listener);
+        Thread.sleep(100);
+
+        Assert.assertTrue(ActorListener.messages.stream().filter(m -> m instanceof WriteIssued)
+                .anyMatch(m -> ((WriteIssued) m).timeStamp() == 2));
+        Assert.assertEquals(3,
+                ActorListener.messages.stream().filter(m -> m instanceof WriteIssued).count());
+    }
+
     @After
     public void tearDown() {
         this.system.terminate();
         ActorListener.messages.clear();
+    }
+
+    private ActorRef createAndTellOthers(String name) {
+        ActorRef node = system.actorOf(Props.create(Node.class, Node::new), name);
+
+        for (ActorRef otherNode : otherNodes) {
+            node.tell(otherNode, ActorRef.noSender());
+            otherNode.tell(node, ActorRef.noSender());
+        }
+
+        node.tell(this.listener, ActorRef.noSender());
+
+        return node;
     }
 }
