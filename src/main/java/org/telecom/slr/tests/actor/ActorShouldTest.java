@@ -17,29 +17,28 @@ public class ActorShouldTest {
     private ActorSystem system;
     private ActorRef listener;
     private ActorRef node;
-    private List<ActorRef> otherNodes;
 
     @Before
     public void setUp() {
         this.system = ActorSystem.create("actorSystem");
         this.listener = system.actorOf(Props.create(ActorListener.class, ActorListener::new), "listener");
         this.node = system.actorOf(Props.create(Node.class, Node::new), "node");
-        this.otherNodes = new LinkedList<>();
+        List<ActorRef> otherNodes = new LinkedList<>();
         this.node.tell(this.listener, ActorRef.noSender());
 
         for (int i = 0; i < 2; i++) {
-            this.otherNodes.add(system.actorOf(Props.create(Node.class, Node::new), "node"+i));
-            this.node.tell(this.otherNodes.get(i), ActorRef.noSender());
+            otherNodes.add(system.actorOf(Props.create(Node.class, Node::new), "node"+i));
+            this.node.tell(otherNodes.get(i), ActorRef.noSender());
         }
 
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 2; j++) {
                 if (i != j) {
-                    this.otherNodes.get(i).tell(this.otherNodes.get(j), ActorRef.noSender());
+                    otherNodes.get(i).tell(otherNodes.get(j), ActorRef.noSender());
                 }
             }
 
-            this.otherNodes.get(i).tell(this.node, ActorRef.noSender());
+            otherNodes.get(i).tell(this.node, ActorRef.noSender());
         }
     }
 
