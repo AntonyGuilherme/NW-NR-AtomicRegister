@@ -144,6 +144,20 @@ public class ActorShouldTest {
                 ActorListener.messages.stream().filter(m -> m instanceof WriteIssued).count());
     }
 
+    @Test
+    public void onReadingInformTheMostRecentValue() throws InterruptedException {
+        this.node.tell(new WriteMessage(10), this.listener);
+        Thread.sleep(100);
+
+        this.node.tell(new ReadMessage(), this.listener);
+        Thread.sleep(100);
+
+        Assert.assertTrue(ActorListener.messages.stream().filter(m -> m instanceof ReadIssued)
+                .anyMatch(m -> ((ReadIssued) m).value() == 10 && ((ReadIssued) m).timestamp() == 1));
+        Assert.assertEquals(1,
+                ActorListener.messages.stream().filter(m -> m instanceof ReadIssued).count());
+    }
+
     @After
     public void tearDown() {
         this.system.terminate();
