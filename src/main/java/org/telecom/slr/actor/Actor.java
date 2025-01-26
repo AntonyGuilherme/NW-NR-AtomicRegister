@@ -18,12 +18,16 @@ public class Actor extends UntypedAbstractActor {
 
     @Override
     public void onReceive(Object message) throws Throwable {
+        messageProcessor(message, getContext());
+    }
+
+    public void messageProcessor(Object message, ActorContext context) {
         for (Handler handler : handlers) {
             if (handler.when(message)) {
                 try {
-                    handler.run(message, getContext());
+                    handler.run(message, context);
                 } catch (Exception e) {
-                    System.err.println(e.getMessage());
+                    System.err.println(context);
                 }
             }
         }

@@ -7,7 +7,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.telecom.slr.actor.Node;
+import org.telecom.slr.actor.Process;
 import org.telecom.slr.actor.messages.*;
 
 import java.util.LinkedList;
@@ -23,12 +23,12 @@ public class ActorShouldTest {
     public void setUp() throws InterruptedException {
         this.system = ActorSystem.create("actorSystem");
         this.listener = system.actorOf(Props.create(ActorListener.class, ActorListener::new), "listener");
-        this.node = system.actorOf(Props.create(Node.class, Node::new), "node");
+        this.node = system.actorOf(Props.create(Process.class, Process::new), "node");
         this.otherNodes = new LinkedList<>();
         this.node.tell(this.listener, ActorRef.noSender());
 
         for (int i = 0; i < 2; i++) {
-            ActorRef actor = system.actorOf(Props.create(Node.class, Node::new), "node"+i);
+            ActorRef actor = system.actorOf(Props.create(Process.class, Process::new), "node"+i);
             this.node.tell(actor, ActorRef.noSender());
             otherNodes.add(actor);
         }
@@ -76,7 +76,7 @@ public class ActorShouldTest {
     }
 
     @Test
-    public void onWritingInformThatTheNewProposedValueWasWrittenEvenIfTwoWrittenAreHappeningConcurrently() throws InterruptedException {
+    public void onWritingInformThatTheNewProposedValueWasWrittenEvenIfTwoWrittenAreHappeningInTheSameProccessConcurrently() throws InterruptedException {
         ActorRef other = createAndTellOthers("other");
         tellAboutEachOther(this.node, other);
         Thread.sleep(100);
@@ -90,6 +90,20 @@ public class ActorShouldTest {
         Assert.assertTrue(ActorListener.messages.stream().filter(m -> m instanceof WriteIssued)
                 .anyMatch(m -> ((WriteIssued) m).timeStamp() == 1 && ((WriteIssued) m).value() == 10));
 
+        Assert.assertEquals(2,
+                ActorListener.messages.stream().filter(m -> m instanceof WriteIssued).count());
+    }
+
+    @Test
+    public void onWritingInformThatTheNewProposedValueWasWrittenEvenIfTwoWrittenAreHappeningConcurrently() throws InterruptedException {
+        this.node.tell(new WriteMessage(10), this.listener);
+        this.node.tell(new WriteMessage(5), this.listener);
+        Thread.sleep(100);
+
+        Assert.assertTrue(ActorListener.messages.stream().filter(m -> m instanceof WriteIssued)
+                .anyMatch(m -> ((WriteIssued) m).timeStamp() == 1));
+        Assert.assertTrue(ActorListener.messages.stream().filter(m -> m instanceof WriteIssued)
+                .anyMatch(m -> ((WriteIssued) m).timeStamp() == 2));
         Assert.assertEquals(2,
                 ActorListener.messages.stream().filter(m -> m instanceof WriteIssued).count());
     }
@@ -137,8 +151,8 @@ public class ActorShouldTest {
     }
 
     private ActorRef createAndTellOthers(String name) {
-        ActorRef node = system.actorOf(Props.create(Node.class, Node::new), name);
-        ActorRef oddAssurance = system.actorOf(Props.create(Node.class, Node::new), name+"01");
+        ActorRef node = system.actorOf(Props.create(Process.class, Process::new), name);
+        ActorRef oddAssurance = system.actorOf(Props.create(Process.class, Process::new), name+"01");
         tellAboutEachOther(oddAssurance, node);
         tellAboutEachOther(oddAssurance, this.node);
 

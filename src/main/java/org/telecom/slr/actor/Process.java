@@ -7,22 +7,30 @@ import org.telecom.slr.actor.messages.*;
 
 import java.util.*;
 
-public class Node extends Actor {
+public class Process extends Actor {
+    private States state;
     private final List<ActorRef> address = new LinkedList<>();
     private final Map<String, WriteRequest> writeRequests = new HashMap<>();
+    private final Queue<Request> mailbox = new LinkedList<>();
 
     private final int id;
     private int numberOfRequests = 0;
     private int timeStamp = -0;
     private int value = 0;
 
-    public Node() {
+    public Process() {
         this.id = IdentityGenerator.generate();
         address.add(self());
+        state = States.WAITING;
+
         run(this::log);
         run(this::getRef).when(message -> message instanceof ActorRef);
 
-        run(this::write).when(message -> message instanceof WriteMessage);
+        //busy behavior
+        run((message, context) -> mailbox.add(new Request(message, context)))
+                .when(message -> message instanceof WriteMessage && state != States.WAITING);
+
+        run(this::write).when(message -> message instanceof WriteMessage && state == States.WAITING);
         run(this::sendToSender).when(message -> message instanceof SendMessage);
         run(this::processWrite).when(message -> message instanceof ValueMessage);
         run(this::overwrite).when(message -> message instanceof UpdateMessage);
@@ -30,9 +38,14 @@ public class Node extends Actor {
     }
 
     private void write(Object message, AbstractActor.ActorContext context) {
+        write(message, context.sender());
+    }
+
+    private void write(Object message, ActorRef sender) {
+        state = States.WRITING;
         numberOfRequests++;
         String requestId = String.format("%d%d",id,numberOfRequests);
-        writeRequests.put(requestId, new WriteRequest(context.sender(), numberOfRequests, (WriteMessage) message));
+        writeRequests.put(requestId, new WriteRequest(sender, numberOfRequests, (WriteMessage) message));
         address.forEach(ref -> ref.tell(new SendMessage(requestId), self()));
     }
 
@@ -87,8 +100,17 @@ public class Node extends Actor {
                 if (writeRequest.writtenValues.size() > address.size() / 2) {
                     writeRequest.requester.tell(new WriteIssued(requestId, timeStamp, value), self());
                     writeRequests.remove(requestId);
+                    verifyMailbox();
                 }
             }
+        }
+    }
+
+    private void verifyMailbox() {
+        state = States.WAITING;
+        Request request = mailbox.poll();
+        if (request != null) {
+            write(request.message, request.sender);
         }
     }
 
@@ -115,6 +137,16 @@ public class Node extends Actor {
             this.allNecessaryValuesInformed = true;
             this.timeStamp = timeStamp;
 
+        }
+    }
+
+    class Request {
+        public final Object message;
+        public final ActorRef sender;
+
+        Request(Object message, ActorContext context) {
+            this.message = message;
+            this.sender = context.sender();
         }
     }
 
