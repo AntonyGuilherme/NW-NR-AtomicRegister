@@ -1,3 +1,3 @@
 package org.telecom.slr.actor.messages;
 
-public record WrittenValueMessage(int requestNumber, int timeStamp, int value) {}
+public record WrittenValueMessage(String requestId, int timeStamp, int value) {}

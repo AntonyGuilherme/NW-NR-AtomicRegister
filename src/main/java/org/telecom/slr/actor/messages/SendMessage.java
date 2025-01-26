@@ -1,3 +1,3 @@
 package org.telecom.slr.actor.messages;
 
-public record SendMessage(int requestNumber) {}
+public record SendMessage(String requestId) {}

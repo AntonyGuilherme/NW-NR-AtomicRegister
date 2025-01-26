@@ -1,3 +1,3 @@
 package org.telecom.slr.actor.messages;
 
-public record WriteIssued(int requestNumber, int timeStamp, int value) {}
+public record WriteIssued(String requestId, int timeStamp, int value) {}

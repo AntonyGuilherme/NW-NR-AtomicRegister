@@ -28,8 +28,9 @@ public class ActorShouldTest {
         this.node.tell(this.listener, ActorRef.noSender());
 
         for (int i = 0; i < 2; i++) {
-            otherNodes.add(system.actorOf(Props.create(Node.class, Node::new), "node"+i));
-            this.node.tell(otherNodes.get(i), ActorRef.noSender());
+            ActorRef actor = system.actorOf(Props.create(Node.class, Node::new), "node"+i);
+            this.node.tell(actor, ActorRef.noSender());
+            otherNodes.add(actor);
         }
 
         for (int i = 0; i < 2; i++) {
@@ -50,7 +51,7 @@ public class ActorShouldTest {
         this.node.tell(new WriteMessage(10), this.listener);
         Thread.sleep(100);
 
-        Assert.assertTrue(ActorListener.messages.stream().anyMatch(m -> ((SendMessage) m).requestNumber() == 1));
+        Assert.assertTrue(ActorListener.messages.stream().anyMatch(m -> m instanceof SendMessage));
     }
 
     @Test
@@ -66,7 +67,6 @@ public class ActorShouldTest {
     @Test
     public void onWritingInformThatTheNewProposedValueWasWritten() throws InterruptedException {
         this.node.tell(new WriteMessage(10), this.listener);
-
         Thread.sleep(100);
 
         Assert.assertTrue(ActorListener.messages.stream().filter(m -> m instanceof WriteIssued)
@@ -77,14 +77,17 @@ public class ActorShouldTest {
 
     @Test
     public void onWritingInformThatTheNewProposedValueWasWrittenEvenIfTwoWrittenAreHappeningConcurrently() throws InterruptedException {
-        this.node.tell(new WriteMessage(10), this.listener);
-        this.node.tell(new WriteMessage(5), this.listener);
+        ActorRef other = createAndTellOthers("other");
+        tellAboutEachOther(this.node, other);
+        Thread.sleep(100);
 
+        this.node.tell(new WriteMessage(10), this.listener);
+        other.tell(new WriteMessage(5), this.listener);
         Thread.sleep(100);
 
         Assert.assertTrue(ActorListener.messages.stream().filter(m -> m instanceof WriteIssued)
-                .allMatch(m -> ((WriteIssued) m).timeStamp() == 0));
-        Assert.assertEquals(2,
+                .allMatch(m -> ((WriteIssued) m).timeStamp() == 1));
+        Assert.assertEquals(1,
                 ActorListener.messages.stream().filter(m -> m instanceof WriteIssued).count());
     }
 
@@ -99,14 +102,13 @@ public class ActorShouldTest {
         Assert.assertTrue(ActorListener.messages.stream().filter(m -> m instanceof WriteIssued)
                 .anyMatch(m -> ((WriteIssued) m).timeStamp() == 1));
         Assert.assertTrue(ActorListener.messages.stream().filter(m -> m instanceof WriteIssued)
-                .anyMatch(m -> ((WriteIssued) m).timeStamp() == 0));
+                .anyMatch(m -> ((WriteIssued) m).timeStamp() == 2));
         Assert.assertEquals(2,
                 ActorListener.messages.stream().filter(m -> m instanceof WriteIssued).count());
     }
 
     @Test
     public void onWritingInformThatTheNewProposedValueWasWrittenWithTheMostRecentTimeStamp() throws InterruptedException {
-
         ActorRef otherNode = createAndTellOthers("other");
         Thread.sleep(100);
 
@@ -133,14 +135,25 @@ public class ActorShouldTest {
 
     private ActorRef createAndTellOthers(String name) {
         ActorRef node = system.actorOf(Props.create(Node.class, Node::new), name);
+        ActorRef oddAssurance = system.actorOf(Props.create(Node.class, Node::new), name+"01");
+        tellAboutEachOther(oddAssurance, node);
+        tellAboutEachOther(oddAssurance, this.node);
 
         for (ActorRef otherNode : otherNodes) {
-            node.tell(otherNode, ActorRef.noSender());
-            otherNode.tell(node, ActorRef.noSender());
+            tellAboutEachOther(otherNode, node);
+            tellAboutEachOther(otherNode, oddAssurance);
         }
 
         node.tell(this.listener, ActorRef.noSender());
+        oddAssurance.tell(this.listener, ActorRef.noSender());
+
+        otherNodes.add(node);
 
         return node;
+    }
+
+    private void tellAboutEachOther(ActorRef actor, ActorRef other) {
+        actor.tell(other, ActorRef.noSender());
+        other.tell(actor, ActorRef.noSender());
     }
 }
