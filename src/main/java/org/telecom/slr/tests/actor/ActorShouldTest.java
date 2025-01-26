@@ -173,6 +173,27 @@ public class ActorShouldTest {
                 ActorListener.messages.stream().filter(m -> m instanceof ReadIssued).count());
     }
 
+    @Test
+    public void notOverlapAnyOperation() throws InterruptedException {
+        this.node.tell(new WriteMessage(10), this.listener);
+        this.node.tell(new WriteMessage(5), this.listener);
+        this.node.tell(new ReadMessage(), this.listener);
+        this.node.tell(new ReadMessage(), this.listener);
+        Thread.sleep(100);
+
+        Assert.assertTrue(ActorListener.messages.stream().filter(m -> m instanceof ReadIssued)
+                .allMatch(m -> ((ReadIssued) m).value() == 5 || ((ReadIssued) m).value() == 10));
+        Assert.assertEquals(2,
+                ActorListener.messages.stream().filter(m -> m instanceof ReadIssued).count());
+
+        Assert.assertTrue(ActorListener.messages.stream().filter(m -> m instanceof WriteIssued)
+                .anyMatch(m -> ((WriteIssued) m).value() == 10));
+        Assert.assertTrue(ActorListener.messages.stream().filter(m -> m instanceof WriteIssued)
+                .anyMatch(m -> ((WriteIssued) m).value() == 5));
+        Assert.assertEquals(2,
+                ActorListener.messages.stream().filter(m -> m instanceof WriteIssued).count());
+    }
+
     @After
     public void tearDown() {
         this.system.terminate();
