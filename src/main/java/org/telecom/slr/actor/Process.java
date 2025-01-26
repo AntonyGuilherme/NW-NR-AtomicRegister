@@ -30,18 +30,27 @@ public class Process extends Actor {
         run((message, context) -> mailbox.add(new Request(message, context)))
                 .when(message -> message instanceof WriteMessage && state != States.WAITING);
 
-        run(this::write).when(message -> message instanceof WriteMessage && state == States.WAITING);
-        run(this::sendToSender).when(message -> message instanceof SendMessage);
-        run(this::processWrite).when(message -> message instanceof ValueMessage);
-        run(this::overwrite).when(message -> message instanceof UpdateMessage);
-        run(this::confirmOverwrite).when(message -> message instanceof WrittenValueMessage);
+        // executes if the process is not busy
+        run(this::startWriting).when(message -> message instanceof WriteMessage && state == States.WAITING);
+
+        // receiving the values and timesStamps from the others knows process
+        run(this::getValue).when(message -> message instanceof SendMessage);
+
+        // handle the values while a writing is happening
+        run(this::handleProcessValue).when(message -> message instanceof ValueMessage);
+
+        // setting the value to the actual local value and register
+        run(this::setValue).when(message -> message instanceof UpdateMessage);
+
+        // handling confirmation of the process value.
+        run(this::handleProcessConfirmationOfReceivingValue).when(message -> message instanceof WrittenValueMessage);
     }
 
-    private void write(Object message, AbstractActor.ActorContext context) {
-        write(message, context.sender());
+    private void startWriting(Object message, AbstractActor.ActorContext context) {
+        startWriting(message, context.sender());
     }
 
-    private void write(Object message, ActorRef sender) {
+    private void startWriting(Object message, ActorRef sender) {
         state = States.WRITING;
         numberOfRequests++;
         String requestId = String.format("%d%d",id,numberOfRequests);
@@ -49,12 +58,12 @@ public class Process extends Actor {
         address.forEach(ref -> ref.tell(new SendMessage(requestId), self()));
     }
 
-    private void sendToSender(Object message, AbstractActor.ActorContext context) {
+    private void getValue(Object message, AbstractActor.ActorContext context) {
         SendMessage sendMessage = (SendMessage) message;
         context.sender().tell(new ValueMessage(timeStamp, value, sendMessage.requestId()), self());
     }
 
-    private void processWrite(Object message, AbstractActor.ActorContext context) {
+    private void handleProcessValue(Object message, AbstractActor.ActorContext context) {
         ValueMessage valueMessage = (ValueMessage) message;
         String requestId = valueMessage.requestId();
 
@@ -72,7 +81,7 @@ public class Process extends Actor {
         }
     }
 
-    private void overwrite(Object message, AbstractActor.ActorContext context) {
+    private void setValue(Object message, AbstractActor.ActorContext context) {
         UpdateMessage updateMessage = (UpdateMessage) message;
         int timeStamp = updateMessage.timeStamp();
         int value = updateMessage.value();
@@ -85,7 +94,7 @@ public class Process extends Actor {
         context.sender().tell(new WrittenValueMessage(updateMessage.requestId(), timeStamp, value), self());
     }
 
-    private void confirmOverwrite(Object message, AbstractActor.ActorContext context) {
+    private void handleProcessConfirmationOfReceivingValue(Object message, AbstractActor.ActorContext context) {
         WrittenValueMessage writtenValue = (WrittenValueMessage) message;
         String requestId = writtenValue.requestId();
         int timeStamp = writtenValue.timeStamp();
@@ -110,7 +119,7 @@ public class Process extends Actor {
         state = States.WAITING;
         Request request = mailbox.poll();
         if (request != null) {
-            write(request.message, request.sender);
+            startWriting(request.message, request.sender);
         }
     }
 
@@ -136,7 +145,6 @@ public class Process extends Actor {
         public void allNecessaryWereValuesInformed(int timeStamp) {
             this.allNecessaryValuesInformed = true;
             this.timeStamp = timeStamp;
-
         }
     }
 
@@ -149,7 +157,6 @@ public class Process extends Actor {
             this.sender = context.sender();
         }
     }
-
 
     private void getRef(Object message, AbstractActor.ActorContext context) {
         ActorRef ref = (ActorRef) message;
