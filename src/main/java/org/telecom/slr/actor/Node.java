@@ -18,6 +18,7 @@ public class Node extends Actor {
 
     public Node() {
         this.id = IdentityGenerator.generate();
+        address.add(self());
         run(this::log);
         run(this::getRef).when(message -> message instanceof ActorRef);
 
@@ -68,7 +69,7 @@ public class Node extends Actor {
             this.timeStamp = timeStamp;
         }
 
-        context.sender().tell(new WrittenValueMessage(updateMessage.requestId(), this.timeStamp, this.value), self());
+        context.sender().tell(new WrittenValueMessage(updateMessage.requestId(), timeStamp, value), self());
     }
 
     private void confirmOverwrite(Object message, AbstractActor.ActorContext context) {

@@ -86,8 +86,11 @@ public class ActorShouldTest {
         Thread.sleep(100);
 
         Assert.assertTrue(ActorListener.messages.stream().filter(m -> m instanceof WriteIssued)
-                .allMatch(m -> ((WriteIssued) m).timeStamp() == 1));
-        Assert.assertEquals(1,
+                .anyMatch(m -> ((WriteIssued) m).timeStamp() == 1 && ((WriteIssued) m).value() == 5));
+        Assert.assertTrue(ActorListener.messages.stream().filter(m -> m instanceof WriteIssued)
+                .anyMatch(m -> ((WriteIssued) m).timeStamp() == 1 && ((WriteIssued) m).value() == 10));
+
+        Assert.assertEquals(2,
                 ActorListener.messages.stream().filter(m -> m instanceof WriteIssued).count());
     }
 
