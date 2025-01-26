@@ -27,8 +27,10 @@ public class Process extends Actor {
         run(this::getRef).when(message -> message instanceof ActorRef);
 
         //busy behavior
-        run((message, context) -> mailbox.add(new AkkaMessage(message, context)))
+        run((message, context) -> mailbox.add(new AkkaMessage(message, context, States.WRITING)))
                 .when(message -> message instanceof WriteMessage && state != States.WAITING);
+        run((message, context) -> mailbox.add(new AkkaMessage(message, context, States.READING)))
+                .when(message -> message instanceof ReadMessage && state != States.WAITING);
 
         // executes if the process is not busy
         run(this::startWriting).when(message -> message instanceof WriteMessage && state == States.WAITING);
@@ -46,7 +48,7 @@ public class Process extends Actor {
         run(this::handleProcessConfirmationOfReceivingValue).when(message -> message instanceof WrittenValueMessage);
 
         //handling reading request
-        run(this::startReading).when(message -> message instanceof ReadMessage);
+        run(this::startReading).when(message -> message instanceof ReadMessage && state == States.WAITING);
     }
 
     private void startWriting(Object message, AbstractActor.ActorContext context) {
@@ -111,10 +113,14 @@ public class Process extends Actor {
     }
 
     private void startReading(Object message, AbstractActor.ActorContext context) {
+        startReading(message, context.sender());
+    }
+
+    private void startReading(Object message, ActorRef sender) {
         state = States.READING;
         numberOfRequests++;
         String requestId = String.format("%d%d",id,numberOfRequests);
-        requests.put(requestId, new ReadRequest(requestId, context.sender(), -1));
+        requests.put(requestId, new ReadRequest(requestId, sender, -1));
         address.forEach(ref -> ref.tell(new SendMessage(requestId), self()));
     }
 
@@ -122,7 +128,10 @@ public class Process extends Actor {
         state = States.WAITING;
         AkkaMessage request = mailbox.poll();
         if (request != null) {
-            startWriting(request.message, request.sender);
+            if (request.status == States.WRITING)
+                startWriting(request.message, request.sender);
+            if (request.status == States.READING)
+                startReading(request.message, request.sender);
         }
     }
 
@@ -187,14 +196,15 @@ public class Process extends Actor {
         }
     }
 
-
     class AkkaMessage {
         public final Object message;
         public final ActorRef sender;
+        public final States status;
 
-        AkkaMessage(Object message, ActorContext context) {
+        AkkaMessage(Object message, ActorContext context, States status) {
             this.message = message;
             this.sender = context.sender();
+            this.status = status;
         }
     }
 
