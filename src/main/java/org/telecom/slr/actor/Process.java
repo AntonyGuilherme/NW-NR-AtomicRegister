@@ -4,13 +4,16 @@ import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import org.telecom.slr.actor.helper.IdentityGenerator;
 import org.telecom.slr.actor.messages.*;
+import org.telecom.slr.actor.requests.ProcessRequest;
+import org.telecom.slr.actor.requests.ReadRequest;
+import org.telecom.slr.actor.requests.WriteRequest;
 
 import java.util.*;
 
 public class Process extends Actor {
     private States state;
     private final List<ActorRef> address = new LinkedList<>();
-    private final Map<String, WriteRequest> requests = new HashMap<>();
+    private final Map<String, ProcessRequest> requests = new HashMap<>();
     private final Queue<AkkaMessage> mailbox = new LinkedList<>();
 
     private final int id;
@@ -74,7 +77,7 @@ public class Process extends Actor {
         String requestId = valueMessage.requestId();
 
         if (requests.containsKey(requestId) && !requests.get(requestId).isFinished(address.size())) {
-            WriteRequest request = requests.get(requestId);
+            ProcessRequest request = requests.get(requestId);
             request.add(valueMessage);
             
             if(request.isFinished(address.size())){
@@ -102,7 +105,7 @@ public class Process extends Actor {
         String requestId = writtenValue.requestId();
 
         if (requests.containsKey(requestId)) {
-            WriteRequest request = requests.get(requestId);
+            ProcessRequest request = requests.get(requestId);
             request.add(writtenValue);
             if (request.IsAllWrittenInTheMajority(address.size())) {
                 request.tellAboutTheEnd(self());
@@ -120,7 +123,7 @@ public class Process extends Actor {
         state = States.READING;
         numberOfRequests++;
         String requestId = String.format("%d%d",id,numberOfRequests);
-        requests.put(requestId, new ReadRequest(requestId, sender, -1));
+        requests.put(requestId, new ReadRequest(requestId, sender));
         address.forEach(ref -> ref.tell(new SendMessage(requestId), self()));
     }
 
@@ -132,79 +135,6 @@ public class Process extends Actor {
                 startWriting(request.message, request.sender);
             if (request.status == States.READING)
                 startReading(request.message, request.sender);
-        }
-    }
-
-    class WriteRequest {
-        protected final ActorRef requester;
-        protected int value;
-        protected final String requestId;
-
-        protected final List<ValueMessage> values = new LinkedList<>();
-        protected final List<WrittenValueMessage> writtenValues = new LinkedList<>();
-
-        WriteRequest(String requestId, ActorRef requester, int value) {
-            this.requestId = requestId;
-            this.requester = requester;
-            this.value = value;
-        }
-
-        public void tellAboutTheEnd(ActorRef self) {
-            requester.tell(new WriteIssued(requestId, timeStamp, value), self);
-        }
-
-        public void add(ValueMessage message) {
-            this.values.add(message);
-        }
-
-        public void add(WrittenValueMessage writtenValue) {
-            writtenValues.add(writtenValue);
-        }
-
-        public boolean isFinished(int numberOfProcess) {
-            return this.values.size() > numberOfProcess/2;
-        }
-
-        public boolean IsAllWrittenInTheMajority(int size) {
-            return this.writtenValues.size() > size/2;
-        }
-
-        public ValueMessage getGreater() {
-            values.sort(Comparator.comparingInt(ValueMessage::timeStamp));
-            return new ValueMessage(
-                    values.getLast().timeStamp() + 1,
-                    this.value,
-                    values.getLast().requestId());
-        }
-    }
-
-    class ReadRequest extends WriteRequest {
-        ReadRequest(String requestId, ActorRef requester, int value) {
-            super(requestId, requester, value);
-        }
-
-        @Override
-        public ValueMessage getGreater() {
-            values.sort(Comparator.comparingInt(ValueMessage::timeStamp));
-            return values.getLast();
-        }
-
-        @Override
-        public void tellAboutTheEnd(ActorRef self) {
-            ValueMessage value = getGreater();
-            requester.tell(new ReadIssued(value.requestId(), value.timeStamp(), value.value()), self);
-        }
-    }
-
-    class AkkaMessage {
-        public final Object message;
-        public final ActorRef sender;
-        public final States status;
-
-        AkkaMessage(Object message, ActorContext context, States status) {
-            this.message = message;
-            this.sender = context.sender();
-            this.status = status;
         }
     }
 
