@@ -18,7 +18,7 @@ public class Process extends Actor {
 
     private final int id;
     private int numberOfRequests = 0;
-    private int timeStamp = -0;
+    private int timeStamp = 0;
     private int value = 0;
 
     public Process() {
