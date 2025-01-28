@@ -12,10 +12,12 @@ public abstract class ProcessRequest {
     protected final String requestId;
     protected final List<ValueMessage> values = new LinkedList<>();
     protected final List<WrittenValueMessage> writtenValues = new LinkedList<>();
+    protected final Long start;
 
     ProcessRequest(String requestId, ActorRef requester) {
         this.requestId = requestId;
         this.requester = requester;
+        this.start = System.currentTimeMillis();
     }
 
     public abstract void tellAboutTheEnd(ActorRef self);

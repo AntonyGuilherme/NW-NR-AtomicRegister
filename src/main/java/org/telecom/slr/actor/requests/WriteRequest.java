@@ -16,8 +16,8 @@ public class WriteRequest extends ProcessRequest {
 
     @Override
     public void tellAboutTheEnd(ActorRef self) {
-
-        requester.tell(new WriteIssued(requestId, getGreater().timeStamp(), value), self);
+        Long end = System.currentTimeMillis();
+        requester.tell(new WriteIssued(requestId, getGreater().timeStamp(), value, this.start, end), self);
     }
 
     @Override

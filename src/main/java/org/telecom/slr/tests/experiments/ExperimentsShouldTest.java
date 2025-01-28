@@ -23,7 +23,7 @@ public class ExperimentsShouldTest {
     }
 
     @Test
-    public void informTheEndAndStartOfEveryExperiment() throws IOException, InterruptedException {
+    public void informTheStartAndEndOfEveryExperiment() throws IOException, InterruptedException {
         ExperimentsModel model = collector.collectFromJsonFile("experiments.json");
 
         Experiment experiment = new Experiment(model);

@@ -20,6 +20,8 @@ public class ReadRequest extends ProcessRequest {
     @Override
     public void tellAboutTheEnd(ActorRef self) {
         ValueMessage value = getGreater();
-        requester.tell(new ReadIssued(value.requestId(), value.timeStamp(), value.value()), self);
+        requester.tell(new ReadIssued(value.requestId(),
+                value.timeStamp(), value.value(), start,
+                System.currentTimeMillis()), self);
     }
 }

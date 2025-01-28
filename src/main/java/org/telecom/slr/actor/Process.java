@@ -26,7 +26,7 @@ public class Process extends Actor {
         address.add(self());
         state = States.WAITING;
 
-        run(this::log);
+        //run(this::log);
         run(this::getRef).when(message -> message instanceof ActorRef);
 
         //deactivate Process

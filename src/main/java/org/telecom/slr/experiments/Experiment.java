@@ -52,7 +52,7 @@ public class Experiment implements Runnable {
         }
 
         Thread.sleep(500);
-
+        ActorListener.setStart(System.currentTimeMillis());
         for (int i = 0; i < numberOfProcess; i++) {
             for (int j = 0; j < numberOfMessages; j++) {
                 nodes.get(i).tell(new WriteMessage(i + numberOfProcess*j), this.listener);
