@@ -29,6 +29,9 @@ public class Process extends Actor {
         run(this::log);
         run(this::getRef).when(message -> message instanceof ActorRef);
 
+        //deactivate Process
+        run((message, context) -> state = States.DEACTIVATED).when(message -> message instanceof Deactivate);
+
         //busy behavior
         run((message, context) -> mailbox.add(new AkkaMessage(message, context, States.WRITING)))
                 .when(message -> message instanceof WriteMessage && state != States.WAITING);
@@ -52,6 +55,13 @@ public class Process extends Actor {
 
         //handling reading request
         run(this::startReading).when(message -> message instanceof ReadMessage && state == States.WAITING);
+    }
+
+    @Override
+    public void onReceive(Object message) throws Throwable {
+        if (state != States.DEACTIVATED) {
+            super.onReceive(message);
+        }
     }
 
     private void startWriting(Object message, AbstractActor.ActorContext context) {
