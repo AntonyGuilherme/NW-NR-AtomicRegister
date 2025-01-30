@@ -26,7 +26,7 @@ public class Process extends Actor {
         address.add(self());
         state = States.WAITING;
 
-        run(this::log);
+        //run(this::log);
         run(this::getRef).when(message -> message instanceof ActorRef);
 
         //deactivate Process
@@ -151,11 +151,5 @@ public class Process extends Actor {
     private void getRef(Object message, AbstractActor.ActorContext context) {
         ActorRef ref = (ActorRef) message;
         address.add(ref);
-    }
-    private void log(Object message, AbstractActor.ActorContext context) {
-        String from = context.sender().path().name();
-        String to = context.self().path().name();
-
-        System.out.printf("from %s to %s : %s%n", from, to, message);
     }
 }

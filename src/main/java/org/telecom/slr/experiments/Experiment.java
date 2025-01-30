@@ -47,7 +47,7 @@ public class Experiment implements Runnable {
             }
         }
 
-        Thread.sleep(500);
+        Thread.sleep(5000);
 
         List<ActorRef> deactivatedNodes = new LinkedList<>(nodes);
         Collections.shuffle(deactivatedNodes);
@@ -56,7 +56,7 @@ public class Experiment implements Runnable {
             deactivatedNodes.get(i).tell(new Deactivate(), ActorRef.noSender());
         }
 
-        Thread.sleep(500);
+        Thread.sleep(5000);
         ExperimentResultCollectorActor.fromNowOnCollect(numberOfProcess, numberOfMessages, numberOfDeactivateProcess);
         for (int i = 1; i <= numberOfProcess; i++) {
             for (int j = 1; j <= numberOfMessages; j++) {
@@ -76,6 +76,11 @@ public class Experiment implements Runnable {
                             model.numbersOfDeactivatedProcess.get(i),
                             model.numbersOfMessages.get(j));
                     tearDown();
+                    int writes = ExperimentResultCollectorActor.experiments.getLast().writesIssued.size();
+                    int reads = ExperimentResultCollectorActor.experiments.getLast().readsIssued.size();
+                    System.out.printf("writes[%s] ; reads[%s]\n",
+                            writes == ((model.numbersOfProcess.get(i) - model.numbersOfDeactivatedProcess.get(i)) * model.numbersOfMessages.get(j)),
+                            reads == ((model.numbersOfProcess.get(i) - model.numbersOfDeactivatedProcess.get(i)) * model.numbersOfMessages.get(j)));
                 }
             }
 
@@ -86,7 +91,7 @@ public class Experiment implements Runnable {
     }
 
     private void tearDown() throws InterruptedException {
-        Thread.sleep(500);
+        Thread.sleep(5000);
         this.system.terminate();
     }
 }
