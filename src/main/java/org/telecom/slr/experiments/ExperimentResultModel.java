@@ -10,13 +10,15 @@ import java.util.List;
 public class ExperimentResultModel {
     public final int numberOfProcess;
     public final int numberOfMessages;
+    public final int numberOfFaultyProcesses;
     public final Long experimentStartTime;
     public final List<WriteIssued> writesIssued = new LinkedList<>();
     public final List<ReadIssued> readsIssued = new LinkedList<>();
 
-    public ExperimentResultModel(int numberOfProcess, int numberOfMessages) {
+    public ExperimentResultModel(int numberOfProcess, int numberOfMessages, int numberOfFaultyProcesses) {
         this.numberOfProcess = numberOfProcess;
         this.numberOfMessages = numberOfMessages;
+        this.numberOfFaultyProcesses = numberOfFaultyProcesses;
         this.experimentStartTime = System.nanoTime();
     }
 

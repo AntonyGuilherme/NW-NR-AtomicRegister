@@ -5,6 +5,7 @@ import akka.actor.ActorSystem;
 import akka.actor.Props;
 
 import org.telecom.slr.actor.Process;
+import org.telecom.slr.actor.helper.IdentityGenerator;
 import org.telecom.slr.actor.messages.Deactivate;
 import org.telecom.slr.actor.messages.ReadMessage;
 import org.telecom.slr.actor.messages.WriteMessage;
@@ -31,6 +32,7 @@ public class Experiment implements Runnable {
 
     private void execute(Integer numberOfProcess, Integer numberOfDeactivateProcess, Integer numberOfMessages) throws InterruptedException {
         List<ActorRef> nodes =  new LinkedList<>();
+        IdentityGenerator.reset();
 
         for (int i = 0; i < numberOfProcess; i++) {
             ActorRef actor = this.system.actorOf(Props.create(Process.class, Process::new), "node"+i);
@@ -55,7 +57,7 @@ public class Experiment implements Runnable {
         }
 
         Thread.sleep(500);
-        ExperimentResultCollectorActor.fromNowOnCollect(numberOfProcess, numberOfMessages);
+        ExperimentResultCollectorActor.fromNowOnCollect(numberOfProcess, numberOfMessages, numberOfDeactivateProcess);
         for (int i = 1; i <= numberOfProcess; i++) {
             for (int j = 1; j <= numberOfMessages; j++) {
                 nodes.get(i-1).tell(new WriteMessage(i + numberOfProcess*j), this.listener);
@@ -68,15 +70,16 @@ public class Experiment implements Runnable {
     public void run() {
         try {
             for (int i = 0; i < model.numbersOfProcess.size(); i++) {
-                setUp();
-                execute(model.numbersOfProcess.get(i),
-                        model.numbersOfDeactivatedProcess.get(i),
-                        model.numbersOfMessages.get(i));
-                tearDown();
+                for (int j = 0; j < model.numbersOfMessages.size(); j++) {
+                    setUp();
+                    execute(model.numbersOfProcess.get(i),
+                            model.numbersOfDeactivatedProcess.get(i),
+                            model.numbersOfMessages.get(j));
+                    tearDown();
+                }
             }
 
             ExperimentResultWriter.write(ExperimentResultCollectorActor.experiments);
-
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

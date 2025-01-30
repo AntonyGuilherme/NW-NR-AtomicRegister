@@ -26,7 +26,7 @@ public class Process extends Actor {
         address.add(self());
         state = States.WAITING;
 
-        //run(this::log);
+        run(this::log);
         run(this::getRef).when(message -> message instanceof ActorRef);
 
         //deactivate Process
@@ -73,7 +73,7 @@ public class Process extends Actor {
         WriteMessage writeMessage = (WriteMessage) message;
         numberOfRequests++;
         String requestId = String.format("%d%d", id, numberOfRequests);
-        requests.put(requestId, new WriteRequest(requestId, sender, writeMessage.value()));
+        requests.put(requestId, new WriteRequest(requestId, id, sender, writeMessage.value()));
         address.forEach(ref -> ref.tell(new SendMessage(requestId), self()));
     }
 
@@ -133,7 +133,7 @@ public class Process extends Actor {
         state = States.READING;
         numberOfRequests++;
         String requestId = String.format("%d%d",id,numberOfRequests);
-        requests.put(requestId, new ReadRequest(requestId, sender));
+        requests.put(requestId, new ReadRequest(requestId, id, sender));
         address.forEach(ref -> ref.tell(new SendMessage(requestId), self()));
     }
 

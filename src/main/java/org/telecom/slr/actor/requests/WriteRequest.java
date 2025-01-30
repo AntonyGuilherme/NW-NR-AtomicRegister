@@ -9,15 +9,15 @@ import java.util.Comparator;
 public class WriteRequest extends ProcessRequest {
     protected final int value;
 
-    public WriteRequest(String requestId, ActorRef requester, int value) {
-        super(requestId, requester);
+    public WriteRequest(String requestId, int node, ActorRef requester, int value) {
+        super(requestId, requester, node);
         this.value = value;
     }
 
     @Override
     public void tellAboutTheEnd(ActorRef self) {
         Long end = System.nanoTime();
-        requester.tell(new WriteIssued(requestId, getGreater().timeStamp(), value, this.start, end), self);
+        requester.tell(new WriteIssued(requestId, node, getGreater().timeStamp(), value, this.start, end), self);
     }
 
     @Override

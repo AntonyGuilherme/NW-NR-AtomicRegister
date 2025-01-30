@@ -7,7 +7,6 @@ import org.junit.Test;
 import org.telecom.slr.actor.messages.ReadIssued;
 import org.telecom.slr.actor.messages.WriteIssued;
 import org.telecom.slr.experiments.*;
-import org.telecom.slr.tests.actor.ActorListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +34,6 @@ public class ExperimentsShouldTest {
         experiment.run();
         Thread.sleep(100);
 
-
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readTree(new File("results.json"));
 
@@ -43,15 +41,11 @@ public class ExperimentsShouldTest {
 
         JsonNode result = experiments.next();
         Assert.assertEquals(3, result.get("numberOfMessages").asInt());
-        //Assert.assertEquals(3, result.get("F").asInt());
+        Assert.assertEquals(3, result.get("numberOfFaultyProcesses").asInt());
         Assert.assertEquals(7, result.get("numberOfProcess").asInt());
         Assert.assertTrue(result.get("latency").isInt());
-
-        result = experiments.next();
-        Assert.assertEquals(3, result.get("numberOfMessages").asInt());
-        //Assert.assertEquals(3, result.get("F").asInt());
-        Assert.assertEquals(10, result.get("numberOfProcess").asInt());
-        Assert.assertTrue(result.get("latency").isInt());
+        Assert.assertTrue(result.get("writes").isArray());
+        Assert.assertTrue(result.get("reads").isArray());
     }
 
     @Test

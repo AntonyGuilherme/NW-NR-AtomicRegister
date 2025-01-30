@@ -13,11 +13,13 @@ public abstract class ProcessRequest {
     protected final List<ValueMessage> values = new LinkedList<>();
     protected final List<WrittenValueMessage> writtenValues = new LinkedList<>();
     protected final Long start;
+    protected final int node;
 
-    ProcessRequest(String requestId, ActorRef requester) {
+    ProcessRequest(String requestId, ActorRef requester, int node) {
         this.requestId = requestId;
         this.requester = requester;
         this.start = System.nanoTime();
+        this.node = node;
     }
 
     public abstract void tellAboutTheEnd(ActorRef self);

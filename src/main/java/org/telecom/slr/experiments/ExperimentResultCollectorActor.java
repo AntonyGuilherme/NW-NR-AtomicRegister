@@ -14,8 +14,8 @@ public class ExperimentResultCollectorActor extends Actor {
         run(this::addExperimentReadIssuedResult).when(message -> message instanceof ReadIssued);
     }
 
-    public static void fromNowOnCollect(int numberOfProcess, int numberOfMessage) {
-        ExperimentResultModel model = new ExperimentResultModel(numberOfProcess, numberOfMessage);
+    public static void fromNowOnCollect(int numberOfProcess, int numberOfMessage, int numberOfFaultyProcesses) {
+        ExperimentResultModel model = new ExperimentResultModel(numberOfProcess, numberOfMessage, numberOfFaultyProcesses);
         experiments.add(model);
     }
 

@@ -22,6 +22,7 @@ public class ExperimentResultWriter {
             ObjectNode experiment = array.addObject();
             experiment.put("numberOfProcess", result.numberOfProcess);
             experiment.put("numberOfMessages", result.numberOfMessages);
+            experiment.put("numberOfFaultyProcesses", result.numberOfFaultyProcesses);
             experiment.put("latency", result.getLatency());
 
             ArrayNode writes = experiment.putArray("writes");
@@ -29,6 +30,7 @@ public class ExperimentResultWriter {
             for (WriteIssued issued : result.writesIssued) {
                 ObjectNode write = writes.addObject();
                 write.put("requestId", issued.requestId());
+                write.put("node", issued.node());
                 write.put("value", issued.value());
                 write.put("timestamp", issued.timeStamp());
                 write.put("start", issued.start());
@@ -40,6 +42,7 @@ public class ExperimentResultWriter {
             for (ReadIssued issued : result.readsIssued) {
                 ObjectNode read = reads.addObject();
                 read.put("requestId", issued.requestId());
+                read.put("node", issued.node());
                 read.put("value", issued.value());
                 read.put("timestamp", issued.timestamp());
                 read.put("start", issued.start());

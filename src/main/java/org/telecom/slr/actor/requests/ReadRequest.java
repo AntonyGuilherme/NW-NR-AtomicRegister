@@ -7,8 +7,8 @@ import org.telecom.slr.actor.messages.ValueMessage;
 import java.util.Comparator;
 
 public class ReadRequest extends ProcessRequest {
-    public ReadRequest(String requestId, ActorRef requester) {
-        super(requestId, requester);
+    public ReadRequest(String requestId, int node, ActorRef requester) {
+        super(requestId, requester, node);
     }
 
     @Override
@@ -20,7 +20,7 @@ public class ReadRequest extends ProcessRequest {
     @Override
     public void tellAboutTheEnd(ActorRef self) {
         ValueMessage value = getGreater();
-        requester.tell(new ReadIssued(value.requestId(),
+        requester.tell(new ReadIssued(value.requestId(), node,
                 value.timeStamp(), value.value(), start,
                 System.nanoTime()), self);
     }
