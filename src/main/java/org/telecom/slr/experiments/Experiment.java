@@ -74,7 +74,10 @@ public class Experiment implements Runnable {
                         model.numbersOfMessages.get(i));
                 tearDown();
             }
-        } catch (InterruptedException e) {
+
+            ExperimentResultWriter.write(ExperimentResultCollectorActor.experiments);
+
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

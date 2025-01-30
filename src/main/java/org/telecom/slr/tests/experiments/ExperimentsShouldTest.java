@@ -1,5 +1,7 @@
 package org.telecom.slr.tests.experiments;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
 import org.telecom.slr.actor.messages.ReadIssued;
@@ -7,8 +9,10 @@ import org.telecom.slr.actor.messages.WriteIssued;
 import org.telecom.slr.experiments.*;
 import org.telecom.slr.tests.actor.ActorListener;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
+import java.util.Iterator;
 
 public class ExperimentsShouldTest {
     private final ExperimentDataCollector collector = new ExperimentDataCollector();
@@ -20,6 +24,34 @@ public class ExperimentsShouldTest {
         Assert.assertArrayEquals(new Integer[]{7, 10}, model.numbersOfProcess.toArray());
         Assert.assertArrayEquals(new Integer[]{3, 3}, model.numbersOfDeactivatedProcess.toArray());
         Assert.assertArrayEquals(new Integer[]{3, 3}, model.numbersOfMessages.toArray());
+    }
+
+    @Test
+    public void writeTheResultsInAnExperimentResultFile() throws IOException, InterruptedException {
+        ExperimentsModel model = collector.collectFromJsonFile("experiments_tests.json");
+
+        Experiment experiment = new Experiment(model);
+
+        experiment.run();
+        Thread.sleep(100);
+
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(new File("results.json"));
+
+        Iterator<JsonNode> experiments = jsonNode.get("results").iterator();
+
+        JsonNode result = experiments.next();
+        Assert.assertEquals(3, result.get("numberOfMessages").asInt());
+        //Assert.assertEquals(3, result.get("F").asInt());
+        Assert.assertEquals(7, result.get("numberOfProcess").asInt());
+        Assert.assertTrue(result.get("latency").isInt());
+
+        result = experiments.next();
+        Assert.assertEquals(3, result.get("numberOfMessages").asInt());
+        //Assert.assertEquals(3, result.get("F").asInt());
+        Assert.assertEquals(10, result.get("numberOfProcess").asInt());
+        Assert.assertTrue(result.get("latency").isInt());
     }
 
     @Test
