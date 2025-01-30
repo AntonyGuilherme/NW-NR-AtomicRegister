@@ -2,6 +2,7 @@ package org.telecom.slr.tests.actor;
 
 import akka.actor.AbstractActor;
 import org.telecom.slr.actor.Actor;
+import org.telecom.slr.actor.messages.ReadIssued;
 import org.telecom.slr.actor.messages.WriteIssued;
 
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ public class ActorListener extends Actor {
     public ActorListener() {
         run((message, context) -> messages.add(message));
         run(this::log).when(message -> message instanceof WriteIssued);
+        run(this::log).when(message -> message instanceof ReadIssued);
     }
 
     public static void setStart(long start) {
@@ -21,13 +23,9 @@ public class ActorListener extends Actor {
     }
 
     private void log(Object message, AbstractActor.ActorContext context) {
-        WriteIssued writeIssued = (WriteIssued) message;
-
         String from = context.sender().path().name();
         String to = context.self().path().name();
 
-        System.out.printf("from %s to %s : %d %s %s %n", from, to, writeIssued.value(),
-                writeIssued.start() - start, writeIssued.end() - start);
+        System.out.printf("from %s to %s : %s%n", from, to, message);
     }
-
 }

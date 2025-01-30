@@ -22,6 +22,6 @@ public class ReadRequest extends ProcessRequest {
         ValueMessage value = getGreater();
         requester.tell(new ReadIssued(value.requestId(),
                 value.timeStamp(), value.value(), start,
-                System.currentTimeMillis()), self);
+                System.nanoTime()), self);
     }
 }

@@ -17,7 +17,7 @@ public abstract class ProcessRequest {
     ProcessRequest(String requestId, ActorRef requester) {
         this.requestId = requestId;
         this.requester = requester;
-        this.start = System.currentTimeMillis();
+        this.start = System.nanoTime();
     }
 
     public abstract void tellAboutTheEnd(ActorRef self);
