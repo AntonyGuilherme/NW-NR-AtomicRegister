@@ -34,7 +34,7 @@ public class ExperimentResultWriter {
                 write.put("value", issued.value());
                 write.put("timestamp", issued.timeStamp());
                 write.put("start", issued.start());
-                write.put("end", issued.start());
+                write.put("end", issued.end());
             }
 
             ArrayNode reads = experiment.putArray("reads");
@@ -46,7 +46,7 @@ public class ExperimentResultWriter {
                 read.put("value", issued.value());
                 read.put("timestamp", issued.timestamp());
                 read.put("start", issued.start());
-                read.put("end", issued.start());
+                read.put("end", issued.end());
             }
         }
 
