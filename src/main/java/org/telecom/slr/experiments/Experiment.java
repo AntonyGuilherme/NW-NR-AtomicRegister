@@ -4,6 +4,8 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 
+import akka.event.Logging;
+import akka.event.LoggingAdapter;
 import org.telecom.slr.actor.Process;
 import org.telecom.slr.actor.helper.IdentityGenerator;
 import org.telecom.slr.actor.messages.Deactivate;
@@ -19,6 +21,7 @@ public class Experiment implements Runnable {
     private final ExperimentsModel model;
     private ActorSystem system;
     private ActorRef listener;
+    private LoggingAdapter logger;
 
     public Experiment(ExperimentsModel model) {
         this.model = model;
@@ -26,6 +29,7 @@ public class Experiment implements Runnable {
 
     private void setUp() {
         this.system = ActorSystem.create("actorSystem");
+        this.logger = Logging.getLogger(this.system, this.getClass());
         this.listener = system.actorOf(
                 Props.create(ExperimentResultCollectorActor.class,
                 ExperimentResultCollectorActor::new), "result");
@@ -58,6 +62,7 @@ public class Experiment implements Runnable {
         }
 
         Thread.sleep(1000);
+        this.logger.info(String.format("startint experiment %d %d %d", numberOfProcess, numberOfDeactivateProcess, numberOfMessages));
         ExperimentResultCollectorActor.fromNowOnCollect(numberOfProcess, numberOfMessages, numberOfDeactivateProcess);
         for (int i = 1; i <= numberOfProcess; i++) {
             for (int j = 1; j <= numberOfMessages; j++) {
