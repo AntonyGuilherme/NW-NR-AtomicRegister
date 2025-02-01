@@ -25,3 +25,15 @@ The system consists of N processes, each uniquely identified and connected throu
 ## Testing & Performance Analysis
 
 The system is tested for configurations with N = {3, 10, 100} and M = {3, 10, 100}, where a subset of f processes crash randomly. Performance metrics include latency and linearizability validation.
+
+##  Dispatcher Configuration
+
+Akka uses a dispatcher (thread pool) to schedule actor execution.
+
+akka.actor.default-dispatcher {
+  fork-join-executor {
+    parallelism-min = 2
+    parallelism-max = 8
+  }
+}
+
