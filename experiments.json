@@ -1,5 +1,5 @@
 {
-  "numbersOfProcess": [3, 10, 100],
-  "numbersOfDeactivatedProcess": [1, 4, 49],
-  "numbersOfMessages": [3, 10, 100]
+  "numbersOfProcess": [3],
+  "numbersOfDeactivatedProcess": [1],
+  "numbersOfMessages": [3]
 }

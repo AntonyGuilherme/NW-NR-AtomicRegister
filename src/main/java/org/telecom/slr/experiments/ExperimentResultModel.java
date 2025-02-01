@@ -49,4 +49,14 @@ public class ExperimentResultModel {
 
         return end - start;
     }
+
+    public Long getStart() {
+        writesIssued.sort(Comparator.comparingLong(WriteIssued::start));
+        readsIssued.sort(Comparator.comparingLong(ReadIssued::start));
+
+        Long lessStartWriting = writesIssued.getFirst().start();
+        Long lessStartReading = readsIssued.getFirst().start();
+
+        return lessStartReading < lessStartWriting ? lessStartReading : lessStartWriting;
+    }
 }

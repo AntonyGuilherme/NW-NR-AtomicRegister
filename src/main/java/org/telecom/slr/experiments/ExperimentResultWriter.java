@@ -26,6 +26,7 @@ public class ExperimentResultWriter {
             experiment.put("latency", result.getLatency());
 
             ArrayNode writes = experiment.putArray("writes");
+            Long start = result.getStart();
 
             for (WriteIssued issued : result.writesIssued) {
                 ObjectNode write = writes.addObject();
@@ -33,8 +34,8 @@ public class ExperimentResultWriter {
                 write.put("node", issued.node());
                 write.put("value", issued.value());
                 write.put("timestamp", issued.timeStamp());
-                write.put("start", issued.start());
-                write.put("end", issued.end());
+                write.put("start", (issued.start() - start)/Math.pow(10,6));
+                write.put("end", (issued.end() - start)/Math.pow(10,6));
             }
 
             ArrayNode reads = experiment.putArray("reads");
@@ -45,8 +46,8 @@ public class ExperimentResultWriter {
                 read.put("node", issued.node());
                 read.put("value", issued.value());
                 read.put("timestamp", issued.timestamp());
-                read.put("start", issued.start());
-                read.put("end", issued.end());
+                read.put("start", (issued.start() - start)/Math.pow(10,6));
+                read.put("end", (issued.end() - start)/Math.pow(10,6));
             }
         }
 
