@@ -102,7 +102,7 @@ public class Process extends Actor {
         int timeStamp = updateMessage.timeStamp();
         int value = updateMessage.value();
 
-        if (timeStamp > this.timeStamp || (this.timeStamp == timeStamp && this.value == value)) {
+        if (timeStamp > this.timeStamp || (this.timeStamp == timeStamp && value > this.value)) {
             this.value = value;
             this.timeStamp = timeStamp;
         }
