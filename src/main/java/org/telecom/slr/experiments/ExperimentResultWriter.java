@@ -53,4 +53,20 @@ public class ExperimentResultWriter {
         objectMapper.writeValue(new File("results.json"), json);
     }
 
+    public static void write(List<ExperimentResultModel> results, Integer numberOfProcess, Integer numberOfMessages) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode json = objectMapper.createObjectNode();
+        json.put("numberOfProcess", numberOfProcess);
+        json.put("numberOfMessages", numberOfMessages);
+        ArrayNode array = json.putArray("results");
+
+        for (ExperimentResultModel result : results) {
+            ObjectNode experiment = array.addObject();
+            experiment.put("numberOfFaultyProcesses", result.numberOfFaultyProcesses);
+            experiment.put("writeLatency", result.getWriteLatency());
+            experiment.put("readLatency", result.getReadLatency());
+        }
+
+        objectMapper.writeValue(new File(String.format("results%d%d.json", numberOfProcess, numberOfMessages)), json);
+    }
 }

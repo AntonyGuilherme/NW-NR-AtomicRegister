@@ -10,6 +10,7 @@ import org.telecom.slr.actor.messages.Deactivate;
 import org.telecom.slr.actor.messages.ReadMessage;
 import org.telecom.slr.actor.messages.WriteMessage;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -47,7 +48,7 @@ public class Experiment implements Runnable {
             }
         }
 
-        Thread.sleep(5000);
+        Thread.sleep(1000);
 
         List<ActorRef> deactivatedNodes = new LinkedList<>(nodes);
         Collections.shuffle(deactivatedNodes);
@@ -56,7 +57,7 @@ public class Experiment implements Runnable {
             deactivatedNodes.get(i).tell(new Deactivate(), ActorRef.noSender());
         }
 
-        Thread.sleep(5000);
+        Thread.sleep(1000);
         ExperimentResultCollectorActor.fromNowOnCollect(numberOfProcess, numberOfMessages, numberOfDeactivateProcess);
         for (int i = 1; i <= numberOfProcess; i++) {
             for (int j = 1; j <= numberOfMessages; j++) {
@@ -76,11 +77,6 @@ public class Experiment implements Runnable {
                             model.numbersOfDeactivatedProcess.get(i),
                             model.numbersOfMessages.get(j));
                     tearDown();
-                    int writes = ExperimentResultCollectorActor.experiments.getLast().writesIssued.size();
-                    int reads = ExperimentResultCollectorActor.experiments.getLast().readsIssued.size();
-                    System.out.printf("writes[%s] ; reads[%s]\n",
-                            writes == ((model.numbersOfProcess.get(i) - model.numbersOfDeactivatedProcess.get(i)) * model.numbersOfMessages.get(j)),
-                            reads == ((model.numbersOfProcess.get(i) - model.numbersOfDeactivatedProcess.get(i)) * model.numbersOfMessages.get(j)));
                 }
             }
 
@@ -90,8 +86,37 @@ public class Experiment implements Runnable {
         }
     }
 
+    public void run(int times) {
+        try {
+            for (int i = 0; i < model.numbersOfProcess.size(); i++) {
+                for (int j = 0; j < model.numbersOfMessages.size(); j++) {
+                    for (int k = 0; k < times; k++) {
+                        setUp();
+                        execute(model.numbersOfProcess.get(i),
+                                model.numbersOfDeactivatedProcess.get(i),
+                                model.numbersOfMessages.get(j));
+                        tearDown();
+
+                        System.out.printf("experiment %d of process %d and messages %d%n",
+                                k,
+                                model.numbersOfProcess.get(i),
+                                model.numbersOfMessages.get(j));
+                    }
+
+                    ExperimentResultWriter.write(
+                            ExperimentResultCollectorActor.experiments,
+                            model.numbersOfProcess.get(i),
+                            model.numbersOfMessages.get(j));
+                    ExperimentResultCollectorActor.experiments.clear();
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void tearDown() throws InterruptedException {
-        Thread.sleep(5000);
+        Thread.sleep(3000);
         this.system.terminate();
     }
 }

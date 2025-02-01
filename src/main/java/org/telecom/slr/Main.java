@@ -10,6 +10,6 @@ public class Main {
         ExperimentsModel model = collector.collectFromJsonFile("experiments.json");
         Experiment experiment = new Experiment(model);
 
-        experiment.run();
+        experiment.run(30);
     }
 }

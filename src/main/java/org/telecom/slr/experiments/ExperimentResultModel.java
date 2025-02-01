@@ -49,4 +49,28 @@ public class ExperimentResultModel {
 
         return end - start;
     }
+
+    public Long getWriteLatency() {
+        long latency = 0L;
+        for (WriteIssued issued : writesIssued) {
+            Long start = issued.start();
+            Long end = issued.end();
+
+            latency += end - start;
+        }
+
+        return latency;
+    }
+
+    public Long getReadLatency() {
+        long latency = 0L;
+        for (ReadIssued issued : readsIssued) {
+            Long start = issued.start();
+            Long end = issued.end();
+
+            latency += end - start;
+        }
+
+        return latency;
+    }
 }
