@@ -62,7 +62,7 @@ public class Experiment implements Runnable {
         }
 
         Thread.sleep(1000);
-        this.logger.info(String.format("startint experiment %d %d %d", numberOfProcess, numberOfDeactivateProcess, numberOfMessages));
+        this.logger.info(String.format("starting experiment %d %d %d", numberOfProcess, numberOfDeactivateProcess, numberOfMessages));
         ExperimentResultCollectorActor.fromNowOnCollect(numberOfProcess, numberOfMessages, numberOfDeactivateProcess);
         for (int i = 1; i <= numberOfProcess; i++) {
             for (int j = 1; j <= numberOfMessages; j++) {
